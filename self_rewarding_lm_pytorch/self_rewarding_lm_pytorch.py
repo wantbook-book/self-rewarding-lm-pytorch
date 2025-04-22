@@ -332,7 +332,7 @@ class SFTTrainer(Module):
         train_dl_iter = cycle(self.train_dataloader)
 
         set_dropout_(self.model, self.dropout)
-
+        breakpoint()
         for _ in tqdm(range(self.num_train_steps), desc = 'sft fine-tuning'):
             self.model.train()
 
@@ -541,7 +541,7 @@ class DPODatasetGenerator(Module):
         prompt_dl = cycle(self.prompt_dataloader)
 
         while num_generated < self.num_preference_pairs:
-
+            breakpoint()
             prompts: List[str] = next(prompt_dl)
 
             prompt_tensors: List[Tensor] = [*map(self.tokenizer_encode, prompts)]
@@ -715,7 +715,6 @@ def create_default_paper_config(
     self_reward_config: dict = dict()
 
 ) -> List[FinetuneConfig]:
-
     prompt_dataset_iter1, prompt_dataset_iter2 = cast_tuple(self_reward_prompt_dataset, 2, validate = True)
     num_generated_iter1, num_generated_iter2 = num_generated_preference_pairs
 
@@ -758,7 +757,7 @@ class SelfRewardingTrainer(Module):
         accelerate_kwargs: dict = dict()
     ):
         super().__init__()
-
+        breakpoint()
         if isinstance(self_reward_prompt_config, RewardConfig):
             self_reward_prompt_config = dict(default = self_reward_prompt_config)
 

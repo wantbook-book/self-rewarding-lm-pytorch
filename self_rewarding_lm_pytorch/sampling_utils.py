@@ -67,6 +67,7 @@ def sample(
     eos_id: Optional[int] = None,
     output_keep_prompt = False
 ):
+    breakpoint()
     device = next(net.parameters()).device
     net.eval()
 
@@ -100,12 +101,13 @@ def sample(
         curr_seq_indices += 1
         curr_seq_indices.clamp_(max = seq_len)
 
+        print('circle')
+        print(curr_seq_indices)
         if not exists(eos_id):
             continue
 
         is_eos_mask = out == eos_id
         all_eos = is_eos_mask.any(dim = -1).all()
-
         if all_eos:
             break
 

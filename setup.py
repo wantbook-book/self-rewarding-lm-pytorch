@@ -27,7 +27,9 @@ setup(
     'pytorch-custom-utils>=0.0.17',
     'torch>=2.0',
     'torchtyping',
-    'tqdm'
+    'tqdm',
+    'transformers',
+    'datasets',
   ],
   classifiers=[
     'Development Status :: 4 - Beta',
