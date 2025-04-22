@@ -60,7 +60,9 @@ def is_distributed():
     return dist.is_initialized() and dist.get_world_size() > 1
 
 def log_prob_from_model_and_seq(model, seq):
-    logits = model(seq)
+    # logits = model(seq)
+    output = model(seq)
+    logits = output.logits
     log_probs = logits.log_softmax(dim = -1)
     return get_at('b n [c], b n -> b n', log_probs, seq)
 

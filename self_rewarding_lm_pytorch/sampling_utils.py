@@ -67,7 +67,6 @@ def sample(
     eos_id: Optional[int] = None,
     output_keep_prompt = False
 ):
-    breakpoint()
     device = next(net.parameters()).device
     net.eval()
 
@@ -88,7 +87,9 @@ def sample(
 
         net_input = out.masked_fill(out == pad_id, 0)
 
-        logits = net(net_input)
+        # logits = net(net_input)
+        output = net(net_input)
+        logits = output.logits
 
         logits = logits[batch_arange, curr_seq_indices]
         logits = rearrange(logits, 'b 1 d -> b d')
@@ -101,8 +102,6 @@ def sample(
         curr_seq_indices += 1
         curr_seq_indices.clamp_(max = seq_len)
 
-        print('circle')
-        print(curr_seq_indices)
         if not exists(eos_id):
             continue
 

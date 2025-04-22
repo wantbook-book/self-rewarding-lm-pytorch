@@ -6,9 +6,9 @@ from datasets import load_dataset, DatasetDict  # Assuming you're using HuggingF
 from torch.utils.data import Dataset
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3"
-os.environ["NCCL_P2P_DISABLE"] = "1"
-os.environ["NCCL_IB_DISABLE"] = "1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3"
+# os.environ["NCCL_P2P_DISABLE"] = "1"
+# os.environ["NCCL_IB_DISABLE"] = "1"
 import debugpy
 debugpy.listen(('localhost', 5678))
 debugpy.wait_for_client()
@@ -89,10 +89,7 @@ class CustomSftDataset(Dataset):
 
             # Ensure that the length of input_ids and mask are equal
             assert len(input_ids) == len(mask) == self.max_length
-            try:
-                processed_data.append((torch.tensor(input_ids), torch.tensor(mask)))
-            except:
-                breakpoint()
+            processed_data.append((torch.tensor(input_ids), torch.tensor(mask)))
         
         return processed_data
 
@@ -105,7 +102,7 @@ class CustomSftDataset(Dataset):
 
 # Load the pre-trained Llama model and tokenizer from Hugging Face
 # model_name = 'llama3.2-3B'  # Use the correct model name here
-model_name = "/home/jovyan/share/LLMAgent/model/Llama-3.2-1B-Instruct"
+model_name = "/c22940/fwk/model/meta-llama/Llama-3.2-1B-Instruct"
 model = AutoModelForCausalLM.from_pretrained(model_name)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -113,16 +110,18 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 # Load your custom dataset
-sft_dataset_path = '/pubshare/fwk/code/MCGEP_back/dataset/math/train_with_idx.jsonl'  # Adjust this path as needed
+sft_dataset_path = '/c22940/fwk2/code/self-rewarding-lm-pytorch/data/train_with_idx.jsonl'  # Adjust this path as needed
 # Assuming the dataset is in a format that HuggingFace `datasets` can load, e.g., CSV, JSON, or Parquet
 # 处理成seq tokens和mask 000011111
 dataset = load_dataset('json', data_files=sft_dataset_path)  # Adjust the format and split as needed
+dataset['train'] = dataset['train'].shuffle(seed=42).select([i for i in range(16)])
 sft_dataset = CustomSftDataset(dataset, tokenizer)
 # Ensure the dataset format aligns with the structure you expect for your trainer
 
 # Prepare the prompt dataset (example mock data used for simplicity)
 # 处理成只包含prompt
 dataset = load_dataset('json', data_files=sft_dataset_path)
+dataset['train'] = dataset['train'].shuffle(seed=42).select([i for i in range(16)])
 prompt_dataset = PromptDataset(dataset, tokenizer)
 
 # Modify the tokenizer functions
@@ -138,7 +137,22 @@ trainer = SelfRewardingTrainer(
     finetune_configs=dict(
         train_sft_dataset=sft_dataset,
         self_reward_prompt_dataset=prompt_dataset,
-        dpo_num_train_steps=1000
+        dpo_num_train_steps=1000,
+        sft_config={
+            'trainer_kwargs': {
+                'batch_size': 1,
+                'grad_accum_steps': 16
+            }
+        },
+        self_reward_config={
+            'reward_generator_kwargs': {
+                'batch_size': 1,
+            },
+            'trainer_kwargs': {
+                'batch_size': 1
+            }
+        }
+
     ),
     tokenizer_decode=decode_tokens,
     tokenizer_encode=encode_str,

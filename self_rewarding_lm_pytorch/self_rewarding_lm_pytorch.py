@@ -319,7 +319,9 @@ class SFTTrainer(Module):
 
         labels.masked_fill_(~prompt_mask[:, 1:], self.ignore_index)
 
-        logits = self.model(seq)
+        # logits = self.model(seq)
+        output = self.model(seq)
+        logits = output.logits
 
         return F.cross_entropy(
             rearrange(logits, 'b n l -> b l n'),
@@ -332,7 +334,7 @@ class SFTTrainer(Module):
         train_dl_iter = cycle(self.train_dataloader)
 
         set_dropout_(self.model, self.dropout)
-        breakpoint()
+        
         for _ in tqdm(range(self.num_train_steps), desc = 'sft fine-tuning'):
             self.model.train()
 
@@ -541,7 +543,6 @@ class DPODatasetGenerator(Module):
         prompt_dl = cycle(self.prompt_dataloader)
 
         while num_generated < self.num_preference_pairs:
-            breakpoint()
             prompts: List[str] = next(prompt_dl)
 
             prompt_tensors: List[Tensor] = [*map(self.tokenizer_encode, prompts)]
@@ -551,8 +552,9 @@ class DPODatasetGenerator(Module):
             model = self.model.to(self.device)
 
             for prompt, prompt_tensor in zip(prompts, prompt_tensors):
-
+                breakpoint()
                 prompt_len = prompt_tensor.shape[-1]
+                prompt_tensor = prompt_tensor.view(-1)
                 repeated_prompt_tensor = repeat(prompt_tensor, 'n -> r n', r = self.num_candidate_responses)
                 repeated_prompt_tensor = repeated_prompt_tensor.to(self.device)
 
@@ -757,7 +759,6 @@ class SelfRewardingTrainer(Module):
         accelerate_kwargs: dict = dict()
     ):
         super().__init__()
-        breakpoint()
         if isinstance(self_reward_prompt_config, RewardConfig):
             self_reward_prompt_config = dict(default = self_reward_prompt_config)
 

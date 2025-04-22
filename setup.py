@@ -30,6 +30,7 @@ setup(
     'tqdm',
     'transformers',
     'datasets',
+    'debugpy'
   ],
   classifiers=[
     'Development Status :: 4 - Beta',
